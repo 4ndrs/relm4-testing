@@ -37,6 +37,10 @@ impl SimpleComponent for AppModel {
             set_decorated: false,
             set_resizable: false,
             set_default_size: (850, 550),
+
+            gtk::Box {
+                add_css_class: "main-box"
+            }
         }
     }
 }
@@ -44,11 +48,31 @@ impl SimpleComponent for AppModel {
 fn main() {
     let app = RelmApp::new("relm4.testing.PureSearch");
 
-    relm4::set_global_css(
-        r#"window {
-            border-radius: 30px;
-        }"#,
-    );
+    relm4::set_global_css(GLOBAL_CSS);
 
     app.run::<AppModel>(());
 }
+
+const GLOBAL_CSS: &str = r#"
+:root {
+    --bg: #ffffff;
+    --fg: #111111;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1e1e1e;
+        --fg: #eeeeee;
+    }
+}
+
+window {
+    background-color: transparent;
+}
+
+.main-box {
+    color: var(--fg);
+    background-color: var(--bg);
+    border-radius: 30px;
+}
+"#;
