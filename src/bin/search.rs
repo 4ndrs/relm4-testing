@@ -1,0 +1,54 @@
+use relm4::gtk::prelude::*;
+use relm4::prelude::*;
+
+struct AppModel {
+    text: String,
+}
+
+#[derive(Debug)]
+enum AppInput {
+    Update,
+}
+
+#[relm4::component]
+impl SimpleComponent for AppModel {
+    type Init = ();
+    type Input = AppInput;
+    type Output = ();
+
+    fn init(
+        _init: Self::Init,
+        root: Self::Root,
+        _sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        let model = Self {
+            text: "".to_string(),
+        };
+
+        let widgets = view_output!();
+
+        ComponentParts { model, widgets }
+    }
+
+    view! {
+        #[root]
+        gtk::ApplicationWindow {
+            set_title: Some("PureSearch"),
+            set_decorated: false,
+            set_resizable: false,
+            set_default_size: (850, 550),
+        }
+    }
+}
+
+fn main() {
+    let app = RelmApp::new("relm4.testing.PureSearch");
+
+    relm4::set_global_css(
+        r#"window {
+            border-radius: 30px;
+        }"#,
+    );
+
+    app.run::<AppModel>(());
+}
