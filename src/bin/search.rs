@@ -39,7 +39,18 @@ impl SimpleComponent for AppModel {
             set_default_size: (850, 550),
 
             gtk::Box {
-                add_css_class: "main-box"
+                add_css_class: "main-box",
+                set_orientation: gtk::Orientation::Vertical,
+
+                gtk::Entry {
+                    set_valign: gtk::Align::Start,
+                    set_hexpand: true,
+                    set_placeholder_text: Some("Search..."),
+
+                    add_css_class: "main-search",
+                },
+
+                append = &gtk::Separator,
             }
         }
     }
@@ -59,6 +70,11 @@ const GLOBAL_CSS: &str = r#"
     --fg: #111111;
 }
 
+/* not supported on macos
+ * on gentoo (hyprland) relm4::set_global_css stays on light mode
+ * when setting it manually with a css provider it changes when launching
+ * but doesn't seem to work when changing the mode on noctalia settings dynamically
+ * other apps detect the change */
 @media (prefers-color-scheme: dark) {
     :root {
         --bg: #1e1e1e;
@@ -70,9 +86,22 @@ window {
     background-color: transparent;
 }
 
+separator {
+    margin: 0 20px;
+}
+
 .main-box {
     color: var(--fg);
     background-color: var(--bg);
     border-radius: 30px;
+}
+
+.main-search {
+    margin: 20px;
+    border: none;
+    outline: none;
+
+    font-size: 24px;
+    font-weight: 500;
 }
 "#;
