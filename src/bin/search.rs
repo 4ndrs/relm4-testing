@@ -7,7 +7,7 @@ struct AppModel {
 
 #[derive(Debug)]
 enum AppInput {
-    Update,
+    Update(String),
 }
 
 #[relm4::component]
@@ -19,15 +19,25 @@ impl SimpleComponent for AppModel {
     fn init(
         _init: Self::Init,
         root: Self::Root,
-        _sender: ComponentSender<Self>,
+        sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = Self {
-            text: "".to_string(),
+            text: "start".to_string(),
         };
 
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+        match message {
+            AppInput::Update(new) => {
+                dbg!(&new);
+
+                self.text = new;
+            }
+        }
     }
 
     view! {
@@ -37,20 +47,25 @@ impl SimpleComponent for AppModel {
             set_decorated: false,
             set_resizable: false,
             set_default_size: (850, 550),
+            add_css_class: "main-box",
 
             gtk::Box {
-                add_css_class: "main-box",
-                set_orientation: gtk::Orientation::Vertical,
+            set_orientation: gtk::Orientation::Vertical,
 
                 gtk::Entry {
                     set_valign: gtk::Align::Start,
                     set_hexpand: true,
                     set_placeholder_text: Some("Search..."),
-
                     add_css_class: "main-search",
+
+                    // too many updates
+                    connect_changed[sender] => move |entry| sender.input(AppInput::Update(entry.text().to_string())),
                 },
 
                 append = &gtk::Separator,
+                append = &gtk::Picture {
+                    set_filename: Some("kurumi think.jpg"),
+                },
             }
         }
     }
@@ -65,41 +80,19 @@ fn main() {
 }
 
 const GLOBAL_CSS: &str = r#"
-:root {
-    --bg: #ffffff;
-    --fg: #111111;
-}
-
-/* not supported on macos
- * on gentoo (hyprland) relm4::set_global_css stays on light mode
- * when setting it manually with a css provider it changes when launching
- * but doesn't seem to work when changing the mode on noctalia settings dynamically
- * other apps detect the change */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #1e1e1e;
-        --fg: #eeeeee;
-    }
-}
-
 window {
-    background-color: transparent;
+    border-radius: 30px;
 }
 
 separator {
     margin: 0 20px;
 }
 
-.main-box {
-    color: var(--fg);
-    background-color: var(--bg);
-    border-radius: 30px;
-}
-
 .main-search {
     margin: 20px;
     border: none;
     outline: none;
+    background-color: transparent;
 
     font-size: 24px;
     font-weight: 500;
