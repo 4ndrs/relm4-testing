@@ -1,3 +1,5 @@
+use gtk::glib::prelude::ToValue;
+use gtk::{gdk, gio};
 use relm4::gtk::prelude::*;
 use relm4::prelude::*;
 
@@ -65,6 +67,10 @@ impl SimpleComponent for AppModel {
                 append = &gtk::Separator,
                 append = &gtk::Picture {
                     set_filename: Some("kurumi think.jpg"),
+                    add_controller = gtk::DragSource {
+                        set_content: Some(&gdk::ContentProvider::for_value(&gio::File::for_path("kurumi think.jpg").to_value())),
+                        set_actions: gdk::DragAction::COPY,
+                    },
                 },
             }
         }
