@@ -1,10 +1,59 @@
 use gtk::glib::prelude::ToValue;
 use gtk::{gdk, gio};
+use relm4::factory::Position;
+use relm4::factory::positions::GridPosition;
 use relm4::gtk::prelude::*;
 use relm4::prelude::*;
 
+struct AnimeImage {
+    path: String,
+}
+
+#[relm4::factory]
+impl FactoryComponent for AnimeImage {
+    type Init = String;
+    type Input = ();
+    type Output = ();
+    type ParentWidget = gtk::Grid;
+    type CommandOutput = ();
+
+    fn init_model(path: Self::Init, _index: &Self::Index, _sender: FactorySender<Self>) -> Self {
+        Self { path }
+    }
+
+    view! {
+        &gtk::Picture {
+            set_content_fit: gtk::ContentFit::Cover,
+            set_size_request: (150, 150),
+            set_filename: Some(&self.path),
+            add_controller = gtk::DragSource {
+                set_content:
+                    Some(&gdk::ContentProvider::for_value(&gio::File::for_path(&self.path).to_value())),
+                set_actions: gdk::DragAction::COPY,
+            },
+        },
+    }
+}
+
+impl Position<GridPosition, DynamicIndex> for AnimeImage {
+    fn position(&self, index: &DynamicIndex) -> GridPosition {
+        let index = index.current_index() as i32;
+
+        let row = index / 5;
+        let column = index % 5;
+
+        GridPosition {
+            column,
+            row,
+            width: 1,
+            height: 1,
+        }
+    }
+}
+
 struct AppModel {
     text: String,
+    anime_images: FactoryVecDeque<AnimeImage>,
 }
 
 #[derive(Debug)]
@@ -23,9 +72,24 @@ impl SimpleComponent for AppModel {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let model = Self {
+        let anime_images = FactoryVecDeque::builder()
+            .launch(gtk::Grid::default())
+            .detach();
+
+        let mut model = Self {
             text: "start".to_string(),
+            anime_images,
         };
+
+        {
+            let mut guard = model.anime_images.guard();
+
+            for _ in 1..40 {
+                guard.push_back("kurumi think.jpg".to_string());
+            }
+        }
+
+        let anime_images_grid = model.anime_images.widget();
 
         let widgets = view_output!();
 
@@ -64,14 +128,19 @@ impl SimpleComponent for AppModel {
                     connect_changed[sender] => move |entry| sender.input(AppInput::Update(entry.text().to_string())),
                 },
 
-                append = &gtk::Separator,
-                append = &gtk::Picture {
-                    set_filename: Some("kurumi think.jpg"),
-                    add_controller = gtk::DragSource {
-                        set_content: Some(&gdk::ContentProvider::for_value(&gio::File::for_path("kurumi think.jpg").to_value())),
-                        set_actions: gdk::DragAction::COPY,
-                    },
-                },
+                gtk::Separator,
+
+                gtk::ScrolledWindow {
+                    set_vexpand: true,
+
+                    #[local_ref]
+                    anime_images_grid -> gtk::Grid {
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_row_spacing: 5,
+                        set_column_spacing: 5,
+                        add_css_class: "anime-images-grid",
+                    }
+                }
             }
         }
     }
@@ -102,5 +171,9 @@ separator {
 
     font-size: 24px;
     font-weight: 500;
+}
+
+.anime-images-grid {
+    margin: 0 20px 20px;
 }
 "#;
